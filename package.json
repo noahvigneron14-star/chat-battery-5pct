@@ -1,19 +1,12 @@
 {
-<<<<<<< HEAD
   "name": "chat-battery-5pct",
   "version": "1.0.0",
-  "description": "Mini chat qui n'autorise l'accès que si la batterie <= 5% (démo).",
-=======
-  "name": "chat-battery-5pct-private",
-  "version": "1.0.0",
-  "description": "Mini chat avec vérification batterie (<=5%), niveau masqué, mode test activé à 100%",
->>>>>>> 27263f9 (🔄 Mise à jour des fichiers du chat avec batterie ≤10%)
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.1"
   }
 }
