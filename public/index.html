@@ -3,16 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-<<<<<<< HEAD
-  <title>Chat protégé — Batterie ≤ 5%</title>
-=======
-  <title>Chat protégé — Mode test</title>
->>>>>>> 27263f9 (🔄 Mise à jour des fichiers du chat avec batterie ≤10%)
+  <title>Chat protégé — Batterie ≤ 10%</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="wrap">
-<<<<<<< HEAD
     <section id="locked" class="card">
       <h1>Accès restreint</h1>
       <p id="battery-text">Lecture du niveau de batterie…</p>
@@ -21,29 +16,12 @@
       </div>
       <p id="unsupported" class="muted hidden">Votre navigateur ne supporte pas l'API Batterie. Impossible de vérifier le niveau.</p>
       <button id="retry" class="btn hidden">Réessayer</button>
-      <p class="muted">Le chat n'est accessible que si la batterie est ≤ 5%.</p>
+      <p class="muted">Le chat n'est accessible que si la batterie est ≤ 10%.</p>
     </section>
 
     <section id="content" class="card hidden" aria-hidden="true">
       <h1>Chat — Accès autorisé</h1>
       <p class="muted" id="final-info">Vérification du niveau de batterie...</p>
-=======
-    <section id="locked" class="card hidden">
-      <h1>Accès restreint</h1>
-      <p id="battery-text">Vérification de la batterie...</p>
-      <div class="battery" aria-hidden="true">
-        <div id="battery-icon" class="battery-level"></div>
-      </div>
-      <p id="unsupported" class="muted hidden">API Batterie non supportée.</p>
-      <button id="retry" class="btn hidden">Réessayer</button>
-    </section>
-
-    <section id="content" class="card hidden" aria-hidden="true">
-      <h1>Chat — Mode test activé</h1>
-      <p class="muted" id="final-info">Chat actif, niveau batterie masqué.</p>
-
-      <button id="forceAccess" class="btn">Forcer l'accès (test)</button>
->>>>>>> 27263f9 (🔄 Mise à jour des fichiers du chat avec batterie ≤10%)
 
       <div id="chat" class="chat">
         <ul id="messages"></ul>
