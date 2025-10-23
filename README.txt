@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 README - Chat protégé par niveau de batterie (<=5%)
 -----------------------------------------------------
 Description :
@@ -22,3 +23,26 @@ Fichiers :
  - /public/index.html
  - /public/styles.css
  - /public/script.js
+=======
+README - Chat Node.js (mode test)
+-------------------------------------
+- Chat temps réel avec batterie masquée.
+- Mode test activé : niveau batterie forcé à 100% pour tester le chat.
+- Ne partage jamais le niveau réel aux autres utilisateurs.
+
+Instructions :
+1. Node.js >=14 installé
+2. Dézipper le projet
+3. Dans le dossier : 
+   npm install
+   npm start
+4. Ouvrir http://localhost:3000
+5. Cliquer sur "Forcer l'accès" si besoin pour tester le chat
+
+Fichiers principaux :
+- server.js
+- package.json
+- /public/index.html
+- /public/styles.css
+- /public/script.js
+>>>>>>> 27263f9 (🔄 Mise à jour des fichiers du chat avec batterie ≤10%)
