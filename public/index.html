@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat protégé — Batterie ≤ 5%</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <section id="locked" class="card">
+      <h1>Accès restreint</h1>
+      <p id="battery-text">Lecture du niveau de batterie…</p>
+      <div class="battery" aria-hidden="true">
+        <div id="battery-icon" class="battery-level"></div>
+      </div>
+      <p id="unsupported" class="muted hidden">Votre navigateur ne supporte pas l'API Batterie. Impossible de vérifier le niveau.</p>
+      <button id="retry" class="btn hidden">Réessayer</button>
+      <p class="muted">Le chat n'est accessible que si la batterie est ≤ 5%.</p>
+    </section>
+
+    <section id="content" class="card hidden" aria-hidden="true">
+      <h1>Chat — Accès autorisé</h1>
+      <p class="muted" id="final-info">Vérification du niveau de batterie...</p>
+
+      <div id="chat" class="chat">
+        <ul id="messages"></ul>
+        <form id="form" autocomplete="off">
+          <input id="name" placeholder="Ton nom (optionnel)" maxlength="30" />
+          <input id="input" autocomplete="off" placeholder="Écris un message..." maxlength="500" />
+          <button>Envoyer</button>
+        </form>
+      </div>
+      <button id="logout" class="btn">Quitter le chat</button>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
