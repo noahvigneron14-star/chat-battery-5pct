@@ -1,12 +1,14 @@
 {
-  "name": "chat-battery-5pct",
+  "name": "chat-battery-10pct-v2",
   "version": "1.0.0",
+  "description": "Chat Socket.IO — accès si batterie ≤10% — messages affichent pseudo + batterie",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.1"
+    "socket.io": "^4.7.2"
   }
 }

@@ -1,161 +1,121 @@
-// client-side: chat avec contrôle batterie ≤10% et fallback
+// Chat v2 - violet theme - affiche pseudo + batterie dans les messages
 const locked = document.getElementById('locked');
 const content = document.getElementById('content');
 const batteryText = document.getElementById('battery-text');
-const batteryIcon = document.getElementById('battery-icon');
-const unsupported = document.getElementById('unsupported');
 const retryBtn = document.getElementById('retry');
+const forceBtn = document.getElementById('force');
 const finalInfo = document.getElementById('final-info');
-const forceBtn = document.getElementById('forceAccess');
 
+const nameInputTop = document.getElementById('name');
 const form = document.getElementById('form');
 const input = document.getElementById('input');
-const nameInput = document.getElementById('name');
+const msgName = document.getElementById('msg-name');
 const messages = document.getElementById('messages');
 const logoutBtn = document.getElementById('logout');
 
 let socket = null;
 let batteryObj = null;
+let lastLevel = null;
 
-function setBatteryVisual(levelPercent) {
-  batteryText.textContent = `Niveau de batterie : ${levelPercent}%`;
-  batteryIcon.style.width = levelPercent + '%';
+function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+
+function setBatteryVisual(level){
+  batteryText.textContent = `Niveau de batterie : ${level}%`;
 }
 
-function showLocked(levelPercent) {
+function showLocked(levelText){
   locked.classList.remove('hidden');
   content.classList.add('hidden');
-  setBatteryVisual(levelPercent);
-  unsupported.classList.add('hidden');
+  batteryText.textContent = levelText;
+  finalInfo.textContent = 'Le chat n\'est accessible que si la batterie est ≤ 10%';
   retryBtn.classList.remove('hidden');
 }
 
-function showContent(levelPercent, charging) {
+function showContent(level, charging){
   locked.classList.add('hidden');
   content.classList.remove('hidden');
-  content.setAttribute('aria-hidden', 'false');
-  finalInfo.innerHTML = `Chat actif ! Niveau mesuré : <strong>${levelPercent}%</strong> — En charge : <strong>${charging ? 'Oui' : 'Non'}</strong>`;
-  setBatteryVisual(levelPercent);
-  initSocket(levelPercent);
+  finalInfo.textContent = 'Chat actif — ton niveau est affiché aux autres.';
+  setBatteryVisual(level !== null ? level : '?');
+  initSocket(level);
 }
 
-function showUnsupported() {
-  unsupported.classList.remove('hidden');
-  batteryText.textContent = 'API Batterie non disponible — accès activé en fallback.';
-  retryBtn.classList.remove('hidden');
-}
-
-// Ajouter message dans la liste
-function addMessage(msg) {
+function addMessage(msg){
   const li = document.createElement('li');
-  const levelDisplay = batteryObj ? Math.round(batteryObj.level * 100) : '?';
-  li.innerHTML = `<strong>${escapeHtml(msg.name)}</strong> <span class="muted">[${levelDisplay}%]</span><div>${escapeHtml(msg.text)}</div>`;
+  const time = new Date(msg.ts).toLocaleTimeString();
+  const batt = (msg.battery !== null && msg.battery !== undefined) ? `${msg.battery}%` : '?%';
+  li.innerHTML = `<div class="message-meta"><strong>${escapeHtml(msg.name)}</strong> <span class="muted">[${batt}]</span> <span class="muted">[${time}]</span></div><div>${escapeHtml(msg.text)}</div>`;
   messages.appendChild(li);
   messages.scrollTop = messages.scrollHeight;
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+function initSocket(levelSent){
+  if(socket) return;
+  socket = io();
+  socket.on('connect', ()=>{
+    const nm = (msgName.value || nameInputTop.value || 'Anonyme').slice(0,30);
+    // send auth with level and name
+    socket.emit('auth',{ level: levelSent !== null ? levelSent : (lastLevel !== null ? lastLevel : 100), name: nm, forced: false });
+  });
+  socket.on('auth_result', d=>{
+    if(!d.allowed){
+      alert('Accès refusé par le serveur (batterie >10%)');
+      socket.disconnect(); socket=null;
+      showLocked('Accès refusé (batterie >10%)');
+    }
+  });
+  socket.on('chat message', msg=> addMessage(msg));
+  socket.on('not_allowed', d=> alert(d.reason || 'Accès non autorisé'));
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const text = input.value.trim();
+    const nm = (msgName.value || nameInputTop.value || 'Anonyme').slice(0,30);
+    if(!text || !socket) return;
+    socket.emit('chat message',{ name: nm, text });
+    input.value='';
+  });
 }
 
-// Initial check batterie
-function checkBattery() {
-  if (!navigator.getBattery) {
-    console.warn("API Batterie non disponible, accès fallback activé");
-    showContent(10, false); // fallback pour tester le chat
+// battery check with fallback and force button
+function checkBattery(){
+  if(!navigator.getBattery){
+    // API not available -> show controls and let user force access
+    showLocked('API Batterie non disponible — utilisez "Forcer accès"');
     return;
   }
-
-  navigator.getBattery().then(bat => {
+  navigator.getBattery().then(bat=>{
     batteryObj = bat;
-
-    function update() {
-      const levelPercent = Math.round(bat.level * 100);
-      const charging = !!bat.charging;
-      setBatteryVisual(levelPercent);
-
-      if (levelPercent <= 10) {
-        showContent(levelPercent, charging);
+    function update(){
+      const level = Math.round(bat.level*100);
+      lastLevel = level;
+      if(level <= 10 && !bat.charging){
+        showContent(level, bat.charging);
       } else {
-        showLocked(levelPercent);
+        showLocked('Batterie trop haute ('+level+'%)');
       }
     }
-
     bat.addEventListener('levelchange', update);
     bat.addEventListener('chargingchange', update);
     update();
-  }).catch(err => {
+  }).catch(err=>{
     console.error(err);
-    showUnsupported();
-    showContent(10, false); // fallback
+    showLocked('Erreur lecture batterie — utilisez "Forcer accès"');
   });
 }
 
-// Bouton retry
-retryBtn.addEventListener('click', () => {
-  retryBtn.classList.add('hidden');
-  checkBattery();
-});
-
-// Bouton forcer accès
-forceBtn.addEventListener('click', () => {
-  showContent(10, false);
-});
-
-// Déconnexion
-logoutBtn.addEventListener('click', () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
+forceBtn.addEventListener('click', ()=>{
+  // force access: send forced=true to server
+  showContent(lastLevel !== null ? lastLevel : 100, false);
+  if(socket){ socket.emit('auth',{ level: lastLevel !== null ? lastLevel : 100, name: msgName.value || nameInputTop.value || 'Anonyme', forced: true }); }
+  else {
+    // init socket and set forced on connect
+    initSocket(lastLevel !== null ? lastLevel : 100);
+    // after connect, re-emit auth with forced flag
+    setTimeout(()=>{ if(socket) socket.emit('auth',{ level: lastLevel !== null ? lastLevel : 100, name: msgName.value || nameInputTop.value || 'Anonyme', forced: true }); }, 300);
   }
-  locked.classList.remove('hidden');
-  content.classList.add('hidden');
 });
 
-// Socket
-function initSocket(levelPercent) {
-  if (socket) return;
-  socket = io();
+retryBtn.addEventListener('click', ()=>{ retryBtn.classList.add('hidden'); checkBattery(); });
+logoutBtn.addEventListener('click', ()=>{ if(socket){socket.disconnect(); socket=null;} location.reload(); });
 
-  socket.on('connect', () => {
-    console.log('connecté socket', socket.id);
-    socket.emit('auth', { level: levelPercent, charging: batteryObj ? !!batteryObj.charging : false });
-  });
-
-  socket.on('auth_result', (data) => {
-    if (!data.allowed) {
-      alert('Accès refusé : batterie > 10%');
-      socket.disconnect();
-      socket = null;
-      showLocked(levelPercent);
-    } else {
-      console.log('Autorisé par le serveur. Vous pouvez chatter.');
-    }
-  });
-
-  socket.on('not_allowed', (data) => {
-    alert(data.reason || 'Accès non autorisé.');
-  });
-
-  socket.on('chat message', (msg) => {
-    addMessage(msg);
-  });
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = input.value.trim();
-    const name = nameInput.value.trim() || 'Anonyme';
-    if (!text) return;
-    if (!socket) return alert('Non connecté au serveur.');
-    socket.emit('chat message', { text, name });
-    input.value = '';
-  });
-}
-
-// Démarrage
+// start
 checkBattery();

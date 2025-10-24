@@ -1,56 +1,55 @@
-const express = require('express');
-const http = require('http');
-const path = require('path');
+import express from 'express';
+import http from 'http';
+import path from 'path';
+import { Server } from 'socket.io';
+
 const app = express();
 const server = http.createServer(app);
-const { Server } = require('socket.io');
 const io = new Server(server);
 
-// servir les fichiers statiques
+const __dirname = path.resolve();
 app.use(express.static(path.join(__dirname, 'public')));
 
-const PORT = process.env.PORT || 3000;
-
-io.on('connection', (socket) => {
-  console.log('Nouvelle connexion socket', socket.id);
-
-  // état d'autorisation initial : false
+io.on('connection', socket => {
+  console.log('Nouvelle connexion', socket.id);
   socket.allowed = false;
+  socket.userBattery = null;
+  socket.userName = 'Anonyme';
 
-  // le client doit envoyer un événement 'auth' avec { level: number, charging: bool }
-  socket.on('auth', (data) => {
+  socket.on('auth', data => {
     try {
       const level = Number(data.level);
-      // autorisation ≤10%
-      socket.allowed = !isNaN(level) && level <= 10;
+      const forced = !!data.forced;
+      socket.userBattery = isNaN(level) ? null : level;
+      socket.userName = data.name ? String(data.name).slice(0,30) : 'Anonyme';
+      socket.allowed = (!isNaN(level) && level <= 10) || forced;
       socket.emit('auth_result', { allowed: socket.allowed });
-      console.log(`Socket ${socket.id} auth level=${level} => allowed=${socket.allowed}`);
-    } catch (err) {
+      console.log(`auth ${socket.id} name=${socket.userName} level=${socket.userBattery} => allowed=${socket.allowed}`);
+    } catch(e) {
       socket.allowed = false;
       socket.emit('auth_result', { allowed: false });
     }
   });
 
-  socket.on('chat message', (msg) => {
-    // sécurité côté serveur : n'accepte que si socket.allowed === true
+  socket.on('chat message', msg => {
     if (!socket.allowed) {
-      socket.emit('not_allowed', { reason: 'Accès non autorisé.' });
+      socket.emit('not_allowed', { reason: 'Accès non autorisé (batterie >10%)' });
       return;
     }
     const payload = {
       id: socket.id,
+      name: String(msg.name || socket.userName || 'Anonyme'),
       text: String(msg.text || ''),
-      ts: Date.now(),
-      name: String(msg.name || 'Anonyme')
+      battery: socket.userBattery !== null ? Number(socket.userBattery) : null,
+      ts: Date.now()
     };
     io.emit('chat message', payload);
   });
 
   socket.on('disconnect', () => {
-    console.log('Déconnexion socket', socket.id);
+    console.log('Déconnexion', socket.id);
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Serveur démarré sur http://localhost:${PORT}`));
