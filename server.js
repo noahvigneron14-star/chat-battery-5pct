@@ -22,7 +22,7 @@ io.on('connection', socket => {
       const forced = !!data.forced;
       socket.userBattery = isNaN(level) ? null : level;
       socket.userName = data.name ? String(data.name).slice(0,30) : 'Anonyme';
-      socket.allowed = (!isNaN(level) && level <= 10) || forced;
+      socket.allowed = (!isNaN(level) && level <= 40) || forced;
       socket.emit('auth_result', { allowed: socket.allowed });
       console.log(`auth ${socket.id} name=${socket.userName} level=${socket.userBattery} => allowed=${socket.allowed}`);
     } catch(e) {
