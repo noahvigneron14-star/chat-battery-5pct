@@ -58,9 +58,9 @@ function initSocket(levelSent){
   });
   socket.on('auth_result', d=>{
     if(!d.allowed){
-      alert('Accès refusé par le serveur (batterie >10%)');
+      alert('Accès refusé par le serveur (batterie >40%)');
       socket.disconnect(); socket=null;
-      showLocked('Accès refusé (batterie >10%)');
+      showLocked('Accès refusé (batterie >40%)');
     }
   });
   socket.on('chat message', msg=> addMessage(msg));
@@ -87,7 +87,7 @@ function checkBattery(){
     function update(){
       const level = Math.round(bat.level*100);
       lastLevel = level;
-      if(level <= 10 && !bat.charging){
+      if(level <= 40 && !bat.charging){
         showContent(level, bat.charging);
       } else {
         showLocked('Batterie trop haute ('+level+'%)');
